@@ -47,6 +47,7 @@ interface State {
 
 const FenwickTree = () => {
   const { state, updateLength, setValue, sumValue } = useFenwickTree();
+  const cells = createCells(state.array.length);
   return (
     <>
       <Head>
@@ -55,20 +56,39 @@ const FenwickTree = () => {
       <div>
         <table>
           <tbody>
-            <tr>
-              {state.data.map((value, index) => {
-                const color = state.sumTraversed.has(index)
-                  ? "orange"
-                  : state.setTraversed.has(index)
-                  ? "cyan"
-                  : undefined;
-                return (
-                  <td key={index} css={tableCell(color)}>
-                    <div css={tableCellContent}>{value}</div>
-                  </td>
-                );
-              })}
-            </tr>
+            {cells.map((row, group) => {
+              return (
+                <tr key={group}>
+                  {row.map((cell, index) => {
+                    if (cell) {
+                      const { value, range } = cell;
+                      const color = state.sumTraversed.has(value)
+                        ? "orange"
+                        : state.setTraversed.has(value)
+                        ? "cyan"
+                        : undefined;
+                      return (
+                        <td colSpan={range} key={index} css={tableCell(color)}>
+                          <div css={innerCellContainer}>
+                            <div css={tableCellContent}>
+                              {state.data[value]}
+                            </div>
+                          </div>
+                        </td>
+                      );
+                    } else {
+                      return (
+                        <td key={index} css={tableCell(undefined, true)}>
+                          <div css={innerCellContainer}>
+                            <div css={tableCellContent}></div>
+                          </div>
+                        </td>
+                      );
+                    }
+                  })}
+                </tr>
+              );
+            })}
             <tr>
               {state.array.map((value, index) => (
                 <td key={index} css={tableCell()}>
@@ -120,6 +140,40 @@ const FenwickTree = () => {
       </div>
     </>
   );
+};
+
+const createCells = (length: number) => {
+  const groups: Set<number>[] = [];
+  for (let index = 0; index < length; index++) {
+    let group = 0;
+    let cur = index + 1;
+    while (cur % 2 === 0 && cur > 0) {
+      cur /= 2;
+      group += 1;
+    }
+    while (groups.length <= group) {
+      groups.push(new Set());
+    }
+    groups[group].add(index);
+  }
+
+  const rows: ({ value: number; range: number } | undefined)[][] = [];
+  groups.forEach((indices, group) => {
+    const range = 1 << group;
+    const row: ({ value: number; range: number } | undefined)[] = [];
+    for (let value = 0; value < length; value++) {
+      if (indices.has(value)) {
+        for (let j = 0; j < range - 1; j++) {
+          row.pop();
+        }
+        row.push({ value, range });
+      } else {
+        row.push(undefined);
+      }
+    }
+    rows.push(row);
+  });
+  return rows;
 };
 
 const fenwickAddInplace = (data: number[], index: number, value: number) => {
@@ -225,9 +279,16 @@ const tableCellContent = css`
   width: 80px;
 `;
 
-const tableCell = (color?: string) => css`
-  border: 1px solid;
+const innerCellContainer = css`
+  display: flex;
+  width: 100%;
+  flex-direction: row-reverse;
+`;
+
+const tableCell = (color?: string, noBorder?: boolean) => css`
+  border: ${noBorder ? "0" : "1px"} solid;
   background-color: ${color};
+  text-align: right;
 `;
 
 const cellInput = css`
