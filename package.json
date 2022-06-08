@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && next export && rm -rf doc && mv out doc",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.9.0",
     "next": "12.1.6",
     "react": "18.1.0",
     "react-dom": "18.1.0"
@@ -19,6 +20,8 @@
     "@types/react-dom": "18.0.5",
     "eslint": "8.17.0",
     "eslint-config-next": "12.1.6",
+    "eslint-plugin-prettier": "^4.0.0",
+    "prettier": "2.6.2",
     "typescript": "4.7.3"
   }
 }
